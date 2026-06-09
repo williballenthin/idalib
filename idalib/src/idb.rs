@@ -838,9 +838,9 @@ impl<'a> Iterator for EntryPointIter<'a> {
         let ordinal = unsafe { get_entry_ordinal(self.index) };
         let addr = unsafe { get_entry(ordinal) };
 
-        // skip?
+        self.index += 1;
+
         if addr == BADADDR {
-            self.index += 1;
             return self.next();
         }
 
