@@ -9,7 +9,7 @@ use crate::ffi::BADADDR;
 use crate::ffi::bytes::*;
 use crate::ffi::comments::{append_cmt, idalib_get_cmt, set_cmt};
 use crate::ffi::conversions::idalib_ea2str;
-use crate::ffi::entry::{get_entry, get_entry_ordinal, get_entry_qty};
+
 use crate::ffi::func::{
     get_func, get_func_qty, getn_func, idalib_get_func_cmt, idalib_set_func_cmt,
 };
@@ -220,13 +220,8 @@ impl IDB {
         Processor::from_ptr(ptr)
     }
 
-    pub fn entries(&self) -> EntryPointIter<'_> {
-        let limit = unsafe { get_entry_qty() };
-        EntryPointIter {
-            index: 0,
-            limit,
-            _marker: PhantomData,
-        }
+    pub fn entries(&self) -> crate::entry::EntryIterator<'_> {
+        crate::entry::entries(self)
     }
 
     pub fn function_at(&self, ea: Address) -> Option<Function<'_>> {
@@ -821,34 +816,4 @@ impl<'a> Iterator for HeadsIterator<'a> {
     }
 }
 
-pub struct EntryPointIter<'a> {
-    index: usize,
-    limit: usize,
-    _marker: PhantomData<&'a IDB>,
-}
 
-impl<'a> Iterator for EntryPointIter<'a> {
-    type Item = Address;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.index >= self.limit {
-            return None;
-        }
-
-        let ordinal = unsafe { get_entry_ordinal(self.index) };
-        let addr = unsafe { get_entry(ordinal) };
-
-        self.index += 1;
-
-        if addr == BADADDR {
-            return self.next();
-        }
-
-        Some(addr.into())
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let lim = self.limit - self.index;
-        (0, Some(lim))
-    }
-}
