@@ -64,7 +64,7 @@ pub struct IDB {
 pub struct IDBOpenOptions {
     idb: Option<PathBuf>,
     ftype: Option<String>,
-
+    extra_args: Vec<String>,
     save: bool,
     auto_analyse: bool,
 }
@@ -75,6 +75,7 @@ impl Default for IDBOpenOptions {
         Self {
             idb: None,
             ftype: None,
+            extra_args: Vec::new(),
             save: false,
             auto_analyse: true,
         }
@@ -107,8 +108,17 @@ impl IDBOpenOptions {
         self
     }
 
+    /// Add an IDA command-line argument used when loading the binary.
+    ///
+    /// See <https://docs.hex-rays.com/core/user-interface/concepts/command-line-switches>
+    /// for the full list of supported switches.
+    pub fn arg(&mut self, arg: impl AsRef<str>) -> &mut Self {
+        self.extra_args.push(arg.as_ref().to_owned());
+        self
+    }
+
     pub fn open(&self, path: impl AsRef<Path>) -> Result<IDB, IDAError> {
-        let mut args = Vec::new();
+        let mut args: Vec<String> = self.extra_args.clone();
 
         if let Some(ftype) = self.ftype.as_ref() {
             args.push(format!("-T{ftype}"));
